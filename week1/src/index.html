@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>UMC</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <input
+        type="checkbox"
+        id="navToggle"
+        class="nav-toggle"
+        aria-hidden="true"
+      />
+
+      <label for="navToggle" class="hamburger" aria-label="메뉴 열기/닫기">
+        <svg class="hamburger-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </label>
+
+      <nav class="site-nav" aria-label="주 메뉴">
+        <ul class="menu">
+          <li>
+            <a class="icon-home" href="/" aria-label="홈" aria-current="page"
+              >Home</a
+            >
+          </li>
+          <li><a href="/projects">Projects</a></li>
+          <li><a href="/members">Members</a></li>
+          <li><a href="/notice">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <label for="navToggle" class="overlay" aria-hidden="true"></label>
+
+      <aside class="mobile-menu" aria-label="모바일 메뉴">
+        <div class="drawer-head">
+          <label for="navToggle" class="close-btn" aria-label="메뉴 닫기"
+            >×</label
+          >
+        </div>
+        <nav class="drawer-nav">
+          <a class="active" href="/">Home</a>
+          <a href="/projects">Projects</a>
+          <a href="/members">Members</a>
+          <a href="/notice">FAQ</a>
+        </nav>
+        <footer class="drawer-foot">© SMUMC 2025.</footer>
+      </aside>
+    </header>
+
+    <main class="demo-hero">
+      <h1>UMC SMU</h1>
+      <p>앱&웹 서비스 런칭에 도전하는 대학생 IT 연합동아리</p>
+    </main>
+  </body>
+</html>
