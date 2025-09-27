@@ -1,9 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-// ⬇️ 네 프로젝트에 맞춰 한 쪽만 사용
-import type { Task } from "../types/todo"; // (A) src/types.ts에 Task가 있을 때
-// import type { Task } from "../types/todo"; // (B) src/types/todo.ts에 Task가 있을 때
+import type { Task } from "../types/todo";
 
 type TasksContextValue = {
   tasks: Task[];
@@ -14,7 +12,6 @@ type TasksContextValue = {
   remove: (id: number) => void;
 };
 
-// strict 설정에서 안전한 패턴: undefined 초기값
 export const TasksContext = createContext<TasksContextValue | undefined>(
   undefined
 );
