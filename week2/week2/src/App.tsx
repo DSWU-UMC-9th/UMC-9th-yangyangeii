@@ -1,4 +1,4 @@
-import "../style.css"; // 루트의 style.css 사용
+import "../style.css";
 import { TasksProvider } from "../src/context/TodoContext";
 import TodoInput from "./components/TodoInput";
 import TodoList from "./components/TodoList";
@@ -7,7 +7,7 @@ export default function App() {
   return (
     <TasksProvider>
       <div className="todo-container">
-        <h1 className="todo-container__header">YONG TODO</h1>
+        <h1 className="todo-container__header">YANG TODO</h1>
         <TodoInput />
         <div
           className="render-container"

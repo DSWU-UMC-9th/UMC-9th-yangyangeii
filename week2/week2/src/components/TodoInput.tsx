@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"; // ✅ type FormEvent 로!
+import { useState, type FormEvent } from "react";
 import { useTasks } from "../context/TodoContext";
 
 export default function TodoInput() {

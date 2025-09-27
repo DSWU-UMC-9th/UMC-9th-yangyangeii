@@ -17,7 +17,7 @@ export default function TodoItem({ task }: { task: Task }) {
 
       {isDone ? (
         <button
-          className="render-container__item-button" // style.css 기본 빨강(삭제)
+          className="render-container__item-button"
           onClick={() => remove(task.id)}
           title="삭제"
         >
@@ -26,7 +26,7 @@ export default function TodoItem({ task }: { task: Task }) {
       ) : (
         <button
           className="render-container__item-button"
-          style={{ backgroundColor: "#28a745" }} // 완료(초록)
+          style={{ backgroundColor: "#28a745" }}
           onClick={() => toggle(task.id)}
           title="완료"
         >
