@@ -7,28 +7,57 @@ import {
   Outlet,
   Navigate,
   useSearchParams,
+  Link,
+  useParams,
+  useLocation,
 } from "react-router-dom";
 import axios from "axios";
 import "./index.css";
 
 // 타입
+type Category = "popular" | "now_playing" | "top_rated" | "upcoming";
+
 type Movie = {
   id: number;
   title?: string;
   name?: string;
   poster_path?: string | null;
+  backdrop_path?: string | null;
   vote_average?: number;
   release_date?: string;
   first_air_date?: string;
 };
-
-type Category = "popular" | "now_playing" | "top_rated" | "upcoming";
 
 type MovieCardProps = {
   title?: string;
   posterPath?: string | null;
   vote?: number;
   release?: string;
+};
+
+type Genre = { id: number; name: string };
+
+type MovieDetails = Movie & {
+  overview?: string;
+  runtime?: number;
+  tagline?: string;
+  homepage?: string;
+  genres?: Genre[];
+};
+
+type CastMember = {
+  id: number;
+  name: string;
+  character?: string;
+  profile_path?: string | null;
+};
+
+type CrewMember = {
+  id: number;
+  name: string;
+  job?: string;
+  department?: string;
+  profile_path?: string | null;
 };
 
 const TMDB = axios.create({
@@ -41,7 +70,13 @@ const TMDB = axios.create({
     : {},
 });
 
-const IMG_BASE = "https://image.tmdb.org/t/p/w342";
+const IMG_POSTER = "https://image.tmdb.org/t/p/w342";
+const IMG_BACKDROP = "https://image.tmdb.org/t/p/w780";
+const IMG_PROFILE = "https://image.tmdb.org/t/p/w185";
+
+const formatRuntime = (min?: number) =>
+  !min && min !== 0 ? "-" : `${Math.floor(min / 60)}시간 ${min % 60}분`;
+const formatDate = (d?: string) => (d ? d : "개봉일 미정");
 
 function Loader({ label = "불러오는 중…" }: { label?: string }) {
   return (
@@ -58,7 +93,7 @@ function Loader({ label = "불러오는 중…" }: { label?: string }) {
 }
 
 function MovieCard({ title, posterPath, vote, release }: MovieCardProps) {
-  const src = posterPath ? `${IMG_BASE}${posterPath}` : undefined;
+  const src = posterPath ? `${IMG_POSTER}${posterPath}` : undefined;
 
   return (
     <article
@@ -160,6 +195,8 @@ function TopPager() {
 
 // 레이아웃
 function Layout() {
+  const location = useLocation();
+  const isDetail = location.pathname.startsWith("/movie/");
   return (
     <div className="min-h-screen bg-neutral-900 text-white">
       <header className="sticky top-0 z-10 bg-neutral-900/80 backdrop-blur border-b border-white/10">
@@ -167,7 +204,7 @@ function Layout() {
         <div className="mx-auto max-w-6xl px-4">
           <Navbar />
         </div>
-        <TopPager />
+        {!isDetail && <TopPager />}
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
@@ -177,11 +214,12 @@ function Layout() {
   );
 }
 
-// 목록 페이지
+// 목록페이지
 function MoviesPage({ category }: { category: Category }) {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
+
   const [sp] = useSearchParams();
   const page = Math.max(1, Number(sp.get("page") ?? 1));
 
@@ -224,15 +262,209 @@ function MoviesPage({ category }: { category: Category }) {
     >
       {movies.map((m) => (
         <li key={m.id}>
-          <MovieCard
-            title={m.title ?? m.name}
-            posterPath={m.poster_path ?? null}
-            vote={m.vote_average}
-            release={m.release_date ?? m.first_air_date}
-          />
+          <Link to={`/movie/${m.id}`} className="block">
+            <MovieCard
+              title={m.title ?? m.name}
+              posterPath={m.poster_path ?? null}
+              vote={m.vote_average}
+              release={m.release_date ?? m.first_air_date}
+            />
+          </Link>
         </li>
       ))}
     </ul>
+  );
+}
+
+// 상세 페이지
+function MovieDetailPage() {
+  const { movieId } = useParams();
+  const [detail, setDetail] = useState<MovieDetails | null>(null);
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [crew, setCrew] = useState<CrewMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    if (!movieId) return;
+    let aborted = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await TMDB.get(`/movie/${movieId}`, {
+          params: { language: "ko-KR", append_to_response: "credits" },
+        });
+        if (aborted) return;
+        setDetail(res.data as MovieDetails);
+        setCast(res.data?.credits?.cast ?? []);
+        setCrew(res.data?.credits?.crew ?? []);
+      } catch (e) {
+        if (!aborted) setError(e);
+      } finally {
+        if (!aborted) setLoading(false);
+      }
+    })();
+    return () => {
+      aborted = true;
+    };
+  }, [movieId]);
+
+  if (loading) return <Loader label="상세 정보를 불러오는 중…" />;
+  if (error || !detail)
+    return (
+      <div className="min-h-[40vh] grid place-items-center text-red-500">
+        상세 정보를 불러오지 못했습니다.
+      </div>
+    );
+
+  const title = detail.title ?? detail.name ?? "제목 미정";
+  const release = detail.release_date ?? detail.first_air_date;
+  const poster = detail.poster_path ? `${IMG_POSTER}${detail.poster_path}` : "";
+  const backdrop = detail.backdrop_path
+    ? `${IMG_BACKDROP}${detail.backdrop_path}`
+    : "";
+
+  const directors = crew.filter((c) => c.job === "Director").slice(0, 3);
+  const topCast = cast.slice(0, 12);
+
+  return (
+    <article className="space-y-6">
+      {backdrop && (
+        <div className="w-full overflow-hidden rounded-2xl ring-1 ring-white/10">
+          <img
+            src={backdrop}
+            alt={title}
+            className="w-full h-[220px] md:h-[320px] object-cover"
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-[200px,1fr] gap-6">
+        <div className="rounded-xl overflow-hidden ring-1 ring-white/10 bg-neutral-800/60">
+          {poster ? (
+            <img
+              src={poster}
+              alt={title}
+              className="w-full object-cover aspect-[2/3]"
+            />
+          ) : (
+            <div className="aspect-[2/3] grid place-items-center text-white/50">
+              No Image
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <h2 className="text-2xl md:text-3xl font-bold">{title}</h2>
+          {detail.tagline && (
+            <p className="text-white/70 italic">“{detail.tagline}”</p>
+          )}
+
+          <div className="flex flex-wrap gap-2 text-sm text-white/70">
+            <span>개봉: {formatDate(release)}</span>
+            <span>·</span>
+            <span>평점: {detail.vote_average?.toFixed?.(1) ?? "-"}</span>
+            <span>·</span>
+            <span>러닝타임: {formatRuntime(detail.runtime)}</span>
+            {detail.genres && detail.genres.length > 0 && (
+              <>
+                <span>·</span>
+                <span>장르: {detail.genres.map((g) => g.name).join(", ")}</span>
+              </>
+            )}
+          </div>
+
+          {detail.overview && (
+            <p className="mt-1 leading-relaxed text-white/90">
+              {detail.overview}
+            </p>
+          )}
+
+          <div className="mt-2 flex gap-2">
+            <Link
+              to="/"
+              className="px-3 py-1 rounded-md border border-white/20 text-white"
+            >
+              ← 목록으로
+            </Link>
+            {detail.homepage && (
+              <a
+                href={detail.homepage}
+                target="_blank"
+                className="px-3 py-1 rounded-md border border-white/20 text-white"
+              >
+                공식 홈페이지
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <section className="space-y-3">
+        {directors.length > 0 && (
+          <>
+            <h3 className="text-lg font-semibold">감독</h3>
+            <ul className="flex flex-wrap gap-3">
+              {directors.map((p) => (
+                <li key={`dir-${p.id}`} className="flex items-center gap-3">
+                  <PersonAvatar name={p.name} profilePath={p.profile_path} />
+                  <div className="text-sm">
+                    <div className="font-medium">{p.name}</div>
+                    <div className="text-white/70">Director</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        <h3 className="text-lg font-semibold">출연</h3>
+        <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {topCast.map((c) => (
+            <li
+              key={`cast-${c.id}`}
+              className="rounded-xl ring-1 ring-white/10 p-3 bg-neutral-800/40"
+            >
+              <div className="flex items-center gap-3">
+                <PersonAvatar name={c.name} profilePath={c.profile_path} />
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{c.name}</div>
+                  <div className="text-xs text-white/70 truncate">
+                    {c.character || "역할 미상"}
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </article>
+  );
+}
+
+function PersonAvatar({
+  name,
+  profilePath,
+}: {
+  name: string;
+  profilePath?: string | null;
+}) {
+  const src = profilePath ? `${IMG_PROFILE}${profilePath}` : "";
+  if (!src) {
+    return (
+      <div className="h-12 w-12 rounded-full bg-neutral-700 grid place-items-center text-white/80 text-sm">
+        {name.slice(0, 1)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={name}
+      loading="lazy"
+      className="h-12 w-12 rounded-full object-cover ring-1 ring-white/10"
+    />
   );
 }
 
@@ -246,6 +478,7 @@ export default function App() {
           <Route path="now" element={<MoviesPage category="now_playing" />} />
           <Route path="top" element={<MoviesPage category="top_rated" />} />
           <Route path="upcoming" element={<MoviesPage category="upcoming" />} />
+          <Route path="movie/:movieId" element={<MovieDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
