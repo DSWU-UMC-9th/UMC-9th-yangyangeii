@@ -60,6 +60,12 @@ type CrewMember = {
   profile_path?: string | null;
 };
 
+// 상세 응답
+type DetailResponse = MovieDetails & {
+  credits?: { cast: CastMember[]; crew: CrewMember[] };
+};
+
+// TMDB 클라이언트
 const TMDB = axios.create({
   baseURL: "https://api.themoviedb.org/3",
   headers: import.meta.env.VITE_TMDB_ACCESS_TOKEN
@@ -78,6 +84,7 @@ const formatRuntime = (min?: number) =>
   !min && min !== 0 ? "-" : `${Math.floor(min / 60)}시간 ${min % 60}분`;
 const formatDate = (d?: string) => (d ? d : "개봉일 미정");
 
+// 로더
 function Loader({ label = "불러오는 중…" }: { label?: string }) {
   return (
     <div className="min-h-[40vh] grid place-items-center">
@@ -92,6 +99,7 @@ function Loader({ label = "불러오는 중…" }: { label?: string }) {
   );
 }
 
+// 카드
 function MovieCard({ title, posterPath, vote, release }: MovieCardProps) {
   const src = posterPath ? `${IMG_POSTER}${posterPath}` : undefined;
 
@@ -166,6 +174,7 @@ function Navbar() {
   );
 }
 
+// 상단 페이지네이션
 function TopPager() {
   const [sp, setSp] = useSearchParams();
   const page = Math.max(1, Number(sp.get("page") ?? 1));
@@ -193,6 +202,51 @@ function TopPager() {
   );
 }
 
+// 커스텀 훅: useCustomFetch
+function useCustomFetch<T>(
+  request: () => Promise<T>,
+  deps: any[] = []
+): { data: T | null; loading: boolean; error: unknown; refetch: () => void } {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+
+  const run = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await request();
+      setData(result);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await request();
+        if (!ignore) setData(result);
+      } catch (e) {
+        if (!ignore) setError(e);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  return { data, loading, error, refetch: run };
+}
+
 // 레이아웃
 function Layout() {
   const location = useLocation();
@@ -214,44 +268,35 @@ function Layout() {
   );
 }
 
-// 목록페이지
+// 목록페이지 (커스텀 훅 적용)
 function MoviesPage({ category }: { category: Category }) {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
-
   const [sp] = useSearchParams();
   const page = Math.max(1, Number(sp.get("page") ?? 1));
 
-  useEffect(() => {
-    let aborted = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await TMDB.get(`/movie/${category}`, {
-          params: { language: "ko-KR", page },
-        });
-        if (!aborted) setMovies(res.data.results ?? []);
-      } catch (e) {
-        if (!aborted) setError(e);
-      } finally {
-        if (!aborted) setLoading(false);
-      }
-    })();
-    return () => {
-      aborted = true;
-    };
+  const { data, loading, error, refetch } = useCustomFetch<
+    Movie[]
+  >(async () => {
+    const res = await TMDB.get(`/movie/${category}`, {
+      params: { language: "ko-KR", page },
+    });
+    return (res.data.results ?? []) as Movie[];
   }, [category, page]);
 
   if (loading) return <Loader />;
-
   if (error)
     return (
       <div className="min-h-[40vh] grid place-items-center text-red-500">
         데이터를 불러오지 못했습니다.
+        <button
+          onClick={refetch}
+          className="mt-4 px-3 py-1 rounded-md border border-white/20"
+        >
+          다시 시도
+        </button>
       </div>
     );
+
+  const movies = data ?? [];
 
   return (
     <ul
@@ -276,48 +321,33 @@ function MoviesPage({ category }: { category: Category }) {
   );
 }
 
-// 상세 페이지
+// 상세 페이지 (커스텀 훅 적용)
 function MovieDetailPage() {
   const { movieId } = useParams();
-  const [detail, setDetail] = useState<MovieDetails | null>(null);
-  const [cast, setCast] = useState<CastMember[]>([]);
-  const [crew, setCrew] = useState<CrewMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
 
-  useEffect(() => {
-    if (!movieId) return;
-    let aborted = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await TMDB.get(`/movie/${movieId}`, {
-          params: { language: "ko-KR", append_to_response: "credits" },
-        });
-        if (aborted) return;
-        setDetail(res.data as MovieDetails);
-        setCast(res.data?.credits?.cast ?? []);
-        setCrew(res.data?.credits?.crew ?? []);
-      } catch (e) {
-        if (!aborted) setError(e);
-      } finally {
-        if (!aborted) setLoading(false);
-      }
-    })();
-    return () => {
-      aborted = true;
-    };
-  }, [movieId]);
+  const { data, loading, error, refetch } =
+    useCustomFetch<DetailResponse>(async () => {
+      const res = await TMDB.get(`/movie/${movieId}`, {
+        params: { language: "ko-KR", append_to_response: "credits" },
+      });
+      return res.data as DetailResponse;
+    }, [movieId]);
 
   if (loading) return <Loader label="상세 정보를 불러오는 중…" />;
-  if (error || !detail)
+  if (error || !data)
     return (
       <div className="min-h-[40vh] grid place-items-center text-red-500">
         상세 정보를 불러오지 못했습니다.
+        <button
+          onClick={refetch}
+          className="mt-4 px-3 py-1 rounded-md border border-white/20"
+        >
+          다시 시도
+        </button>
       </div>
     );
 
+  const detail = data;
   const title = detail.title ?? detail.name ?? "제목 미정";
   const release = detail.release_date ?? detail.first_air_date;
   const poster = detail.poster_path ? `${IMG_POSTER}${detail.poster_path}` : "";
@@ -325,6 +355,8 @@ function MovieDetailPage() {
     ? `${IMG_BACKDROP}${detail.backdrop_path}`
     : "";
 
+  const cast = detail.credits?.cast ?? [];
+  const crew = detail.credits?.crew ?? [];
   const directors = crew.filter((c) => c.job === "Director").slice(0, 3);
   const topCast = cast.slice(0, 12);
 
