@@ -10,9 +10,11 @@ import {
   Link,
   useParams,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import axios from "axios";
 import "./index.css";
+import LoginPage from "./pages/LoginPage"; // 로그인 페이지
 
 // 타입
 type Category = "popular" | "now_playing" | "top_rated" | "upcoming";
@@ -142,7 +144,7 @@ function MovieCard({ title, posterPath, vote, release }: MovieCardProps) {
   );
 }
 
-// 네비게이션
+// 네비게이션 탭
 function Navbar() {
   const tabs = [
     { to: "/", label: "인기 영화", end: true },
@@ -247,18 +249,63 @@ function useCustomFetch<T>(
   return { data, loading, error, refetch: run };
 }
 
-// 레이아웃
+// 레이아웃(로그인/회원가입에서는 탭, 페이지네이션 숨김)
 function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isDetail = location.pathname.startsWith("/movie/");
+  const isAuthPage =
+    location.pathname.startsWith("/login") ||
+    location.pathname.startsWith("/signup");
+  const authed = !!localStorage.getItem("access_token");
+
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    navigate(0); // 헤더 상태 갱신
+  };
+
   return (
     <div className="min-h-screen bg-neutral-900 text-white">
       <header className="sticky top-0 z-10 bg-neutral-900/80 backdrop-blur border-b border-white/10">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between"></div>
-        <div className="mx-auto max-w-6xl px-4">
-          <Navbar />
+        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="text-pink-400 font-extrabold tracking-tight">
+            둘러둘러LP판
+          </Link>
+          <div className="flex items-center gap-2">
+            {authed ? (
+              <button
+                onClick={logout}
+                className="px-3 py-1 rounded-md border border-white/20 hover:bg-white/10"
+              >
+                로그아웃
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-3 py-1 rounded-md border border-white/20 hover:bg-white/10"
+                >
+                  로그인
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-3 py-1 rounded-md bg-pink-500 hover:bg-pink-400"
+                >
+                  회원가입
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-        {!isDetail && <TopPager />}
+
+        {!isAuthPage && (
+          <>
+            <div className="mx-auto max-w-6xl px-4">
+              <Navbar />
+            </div>
+            {!isDetail && <TopPager />}
+          </>
+        )}
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
@@ -268,7 +315,7 @@ function Layout() {
   );
 }
 
-// 목록페이지 (커스텀 훅 적용)
+// 목록페이지
 function MoviesPage({ category }: { category: Category }) {
   const [sp] = useSearchParams();
   const page = Math.max(1, Number(sp.get("page") ?? 1));
@@ -321,7 +368,7 @@ function MoviesPage({ category }: { category: Category }) {
   );
 }
 
-// 상세 페이지 (커스텀 훅 적용)
+// 상세 페이지
 function MovieDetailPage() {
   const { movieId } = useParams();
 
@@ -511,6 +558,7 @@ export default function App() {
           <Route path="top" element={<MoviesPage category="top_rated" />} />
           <Route path="upcoming" element={<MoviesPage category="upcoming" />} />
           <Route path="movie/:movieId" element={<MovieDetailPage />} />
+          <Route path="login" element={<LoginPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
