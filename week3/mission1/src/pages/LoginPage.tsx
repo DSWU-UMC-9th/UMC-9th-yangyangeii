@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../api/axiosInstance"; // 👈 axiosInstance 불러오기 (src/api/axiosInstance.ts)
 
 function isEmail(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -19,11 +20,23 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
+
     try {
       setSubmitting(true);
-      // TODO: 실제 로그인 API 연동
-      await new Promise((r) => setTimeout(r, 700));
-      nav(-1); // 로그인 성공 시 이전 페이지로
+
+      // ✅ 실제 로그인 API 요청 (AccessToken, RefreshToken 저장)
+      const res = await api.post("/api/login", { email, password: pw });
+      const { accessToken, refreshToken } = res.data;
+
+      // 토큰 저장
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      alert("로그인 성공! 🎉");
+      nav("/"); // 홈 또는 이전 페이지로 이동
+    } catch (err) {
+      console.error(err);
+      alert("로그인 실패! 이메일과 비밀번호를 확인하세요.");
     } finally {
       setSubmitting(false);
     }
