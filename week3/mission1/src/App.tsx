@@ -13,8 +13,10 @@ import {
   useNavigate,
 } from "react-router-dom";
 import axios from "axios";
+import ProtectedRoute from "./components/ProjectedRoute";
 import "./index.css";
 import LoginPage from "./pages/LoginPage"; // 로그인 페이지
+import SignupPage from "./pages/SignupPage"; // 회원가입 페이지
 
 // 타입
 type Category = "popular" | "now_playing" | "top_rated" | "upcoming";
@@ -557,10 +559,19 @@ export default function App() {
           <Route path="now" element={<MoviesPage category="now_playing" />} />
           <Route path="top" element={<MoviesPage category="top_rated" />} />
           <Route path="upcoming" element={<MoviesPage category="upcoming" />} />
-          <Route path="movie/:movieId" element={<MovieDetailPage />} />
-          <Route path="login" element={<LoginPage />} />
+          <Route
+            path="movie/:movieId"
+            element={
+              <ProtectedRoute>
+                <MovieDetailPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,121 +1,114 @@
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useForm } from "../hooks/useForm";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-const AUTH = axios.create({
-  baseURL: import.meta.env.VITE_AUTH_BASE_URL || "",
-});
-
-async function apiLogin(email: string, password: string) {
-  if (AUTH.defaults.baseURL) {
-    const res = await AUTH.post("/login", { email, password });
-    const data = res.data ?? {};
-    const token =
-      data.accessToken || data.token || data.result?.accessToken || "";
-    if (!token) throw new Error(data.message || "로그인에 실패했습니다.");
-    return { token };
-  }
-  await new Promise((r) => setTimeout(r, 600));
-  const ok = /.+@.+\..+/.test(email) && password.length >= 6;
-  if (!ok) throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
-  return { token: "mock-access-token" };
+function isEmail(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
 export default function LoginPage() {
-  const navigate = useNavigate();
-  const {
-    values,
-    errors,
-    touched,
-    isValid,
-    submitting,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-  } = useForm({
-    initialValues: { email: "", password: "" },
-    validate: (v) => {
-      const e: Record<string, string> = {};
-      if (!v.email) e.email = "이메일을 입력해 주세요.";
-      else if (!/.+@.+\..+/.test(v.email))
-        e.email = "유효하지 않은 이메일 형식입니다.";
-      if (!v.password) e.password = "비밀번호를 입력해 주세요.";
-      else if (v.password.length < 6)
-        e.password = "비밀번호는 최소 6자 이상이어야 합니다.";
-      return e;
-    },
-    onSubmit: async (v) => {
-      const { token } = await apiLogin(v.email, v.password);
-      localStorage.setItem("access_token", token);
-      alert("로그인 되었습니다!");
-      navigate(-1);
-    },
-  });
+  const nav = useNavigate();
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [touched, setTouched] = useState({ email: false, pw: false });
+
+  const emailValid = isEmail(email);
+  const pwValid = pw.length >= 6;
+  const canSubmit = emailValid && pwValid && !submitting;
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    try {
+      setSubmitting(true);
+      // TODO: 실제 로그인 API 연동
+      await new Promise((r) => setTimeout(r, 700));
+      nav(-1); // 로그인 성공 시 이전 페이지로
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
-    <div className="min-h-[70vh] grid place-items-center">
+    <div className="min-h-screen bg-white text-neutral-900 grid place-items-center px-4">
       <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-neutral-800/50 border border-white/10 rounded-2xl p-6 text-white"
+        onSubmit={onSubmit}
+        className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white shadow-md p-6"
       >
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => nav(-1)}
+            className="text-sm text-neutral-500 hover:text-neutral-700"
+          >
+            ← 뒤로
+          </button>
+        </div>
+
+        <h1 className="text-2xl font-bold text-center mb-1">로그인</h1>
+        <p className="text-center text-sm text-neutral-500 mb-6">
+          계정으로 계속하기
+        </p>
+
         <button
           type="button"
-          onClick={() => navigate(-1)}
-          className="mb-4 text-white/80 hover:text-white"
-        >
-          ← 뒤로
-        </button>
-
-        <h2 className="text-xl font-semibold mb-4 text-center">로그인</h2>
-
-        <button
-          type="button"
-          className="w-full h-10 rounded-md border border-white/20 hover:bg-white/10"
+          className="w-full h-10 rounded-md border border-neutral-300 bg-white hover:bg-neutral-50 transition mb-4"
         >
           구글 로그인
         </button>
 
-        <div className="my-3 text-center text-white/50 text-xs">OR</div>
-
-        <div className="space-y-1">
-          <input
-            name="email"
-            type="email"
-            placeholder="이메일을 입력해 주세요"
-            value={values.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full h-10 rounded-md bg-neutral-900/70 border border-white/20 px-3 outline-none focus:border-white/40"
-            autoComplete="email"
-          />
-          {touched.email && errors.email && (
-            <p className="text-xs text-rose-400">{errors.email}</p>
-          )}
+        <div className="relative my-2 text-center">
+          <span className="px-2 bg-white text-neutral-400 text-xs">OR</span>
+          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-px bg-neutral-200" />
         </div>
 
-        <div className="space-y-1 mt-3">
-          <input
-            name="password"
-            type="password"
-            placeholder="비밀번호를 입력해 주세요"
-            value={values.password}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full h-10 rounded-md bg-neutral-900/70 border border-white/20 px-3 outline-none focus:border-white/40"
-            autoComplete="current-password"
-          />
-          {touched.password && errors.password && (
-            <p className="text-xs text-rose-400">{errors.password}</p>
-          )}
-        </div>
+        {/* 이메일 */}
+        <label className="block text-sm font-medium mb-1">이메일</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+          placeholder="이메일을 입력해 주세요"
+          className="w-full h-10 rounded-md border border-neutral-300 px-3 outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+        />
+        {!emailValid && touched.email && (
+          <p className="mt-1 text-xs text-red-600">
+            올바른 이메일 형식을 입력해 주세요.
+          </p>
+        )}
+
+        {/* 비밀번호 */}
+        <label className="block text-sm font-medium mt-4 mb-1">비밀번호</label>
+        <input
+          type="password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          onBlur={() => setTouched((t) => ({ ...t, pw: true }))}
+          placeholder="비밀번호를 입력해 주세요"
+          className="w-full h-10 rounded-md border border-neutral-300 px-3 outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+        />
+        {!pwValid && touched.pw && (
+          <p className="mt-1 text-xs text-red-600">
+            비밀번호는 6자 이상이어야 합니다.
+          </p>
+        )}
 
         <button
           type="submit"
-          disabled={!isValid || submitting}
-          className="mt-4 w-full h-10 rounded-md bg-pink-500 disabled:opacity-40 hover:bg-pink-400 transition"
+          disabled={!canSubmit}
+          className="mt-6 w-full h-10 rounded-md bg-fuchsia-500 text-white font-medium
+                     disabled:opacity-50 disabled:cursor-not-allowed hover:bg-fuchsia-600 transition"
         >
           {submitting ? "로그인 중…" : "로그인"}
         </button>
+
+        <div className="mt-4 text-center text-sm">
+          계정이 없나요?{" "}
+          <Link to="/signup" className="text-fuchsia-600 hover:underline">
+            회원가입
+          </Link>
+        </div>
       </form>
     </div>
   );
