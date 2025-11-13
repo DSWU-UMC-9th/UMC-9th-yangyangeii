@@ -1,13 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchLps, type LpItem, type LpSort } from "../lib/api";
+import { fetchLps, type LpItem } from "../lib/api";
 
-/** LP 목록 쿼리 (정렬 반영) */
-export function useLps(sort: LpSort) {
+export function useLps() {
   return useQuery<LpItem[]>({
-    queryKey: ["lps", sort],
-    queryFn: () => fetchLps(sort),
-    placeholderData: (prev) => prev,
+    queryKey: ["lpList"],
+    queryFn: () => fetchLps("latest"),
   });
 }
-
-export type { LpItem, LpSort };

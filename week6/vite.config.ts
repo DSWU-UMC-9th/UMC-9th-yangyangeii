@@ -6,9 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/v1": {
-        target: "http://localhost:4000",
+        target: "http://localhost:8000", // Nest 백엔드 포트
         changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/v1/, "/v1"),
+        // 프론트에서 /v1/... 로 호출하면 그대로 백엔드 /v1/... 로 전달
       },
     },
   },

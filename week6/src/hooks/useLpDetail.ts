@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchLpDetail, type LpDetail } from "../lib/api";
+export function useLpDetail(lpId: number | undefined) {
+  const enabled = typeof lpId === "number" && !Number.isNaN(lpId);
 
-/** LP 상세 쿼리 */
-export function useLpDetail(lpId: string) {
-  return useQuery<LpDetail>({
-    queryKey: ["lp", lpId],
-    queryFn: () => fetchLpDetail(lpId),
+  const query = useQuery<LpDetail>({
+    queryKey: ["lpDetail", lpId],
+    queryFn: () => fetchLpDetail(lpId as number),
+    enabled,
   });
+
+  return query;
 }
