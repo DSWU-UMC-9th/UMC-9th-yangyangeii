@@ -1,16 +1,12 @@
-import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+// src/layouts/MainLayout.tsx
+import { Link, Outlet } from "react-router-dom";
 import styled from "styled-components";
 import { ROUTES } from "../constants";
 import { useAuthContext } from "../context/AuthContext";
 
-type MainLayoutProps = {
-  children: ReactNode;
-};
-
 const Wrap = styled.div`
   min-height: 100vh;
-  background: #000; /* 전체 배경 검정 */
+  background: #000;
   color: #fff;
 `;
 
@@ -60,7 +56,7 @@ const Main = styled.main`
   align-items: flex-start;
 `;
 
-export default function MainLayout({ children }: MainLayoutProps) {
+export default function MainLayout() {
   const { isLoggedIn } = useAuthContext();
 
   return (
@@ -74,7 +70,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {isLoggedIn ? (
             <>
               <span>반갑습니다!</span>
-              {/* 필요하면 로그아웃 버튼도 추가 가능 */}
             </>
           ) : (
             <>
@@ -85,7 +80,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </Nav>
       </Header>
 
-      <Main>{children}</Main>
+      <Main>
+        <Outlet />
+      </Main>
     </Wrap>
   );
 }

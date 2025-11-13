@@ -1,4 +1,3 @@
-// src/hooks/useAuth.ts
 import { useMutation } from "@tanstack/react-query";
 import { login, signUp, logout } from "../apis/auth";
 import type {
@@ -8,7 +7,6 @@ import type {
   SignUpResponse,
 } from "../types/auth";
 
-/** localStorage 에 토큰 저장/삭제용 키 */
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 
@@ -39,17 +37,6 @@ export function useLoginMutation(
     onSuccess: (data) => {
       console.log("[LOGIN SUCCESS]", data);
 
-      // ✅ Swagger 로그인 응답 구조 기준:
-      // {
-      //   status: true,
-      //   statusCode: 201,
-      //   message: "...",
-      //   data: {
-      //     id, name, email, bio, avatar,
-      //     accessToken,
-      //     refreshToken
-      //   }
-      // }
       const accessToken = (data as any).data?.accessToken;
       const refreshToken = (data as any).data?.refreshToken;
 

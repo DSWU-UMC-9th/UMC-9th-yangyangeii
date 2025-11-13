@@ -1,8 +1,6 @@
-// src/apis/Client.ts
 import axios, { AxiosError } from "axios";
 import type { AxiosInstance } from "axios";
 
-// useAuth.ts에서 저장한 키랑 맞추기
 const ACCESS_TOKEN_KEY = "accessToken";
 
 const api: AxiosInstance = axios.create({
@@ -11,10 +9,8 @@ const api: AxiosInstance = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  // ✅ 로그인 성공 시 localStorage에 저장된 accessToken 읽기
   const token = localStorage.getItem(ACCESS_TOKEN_KEY);
 
-  // 헤더 객체가 없을 수도 있으니 방어 코드
   config.headers = config.headers ?? {};
 
   if (token) {

@@ -27,7 +27,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      // 로그아웃되면 토큰도 제거 (원하면 빼도 됨)
+      // 로그아웃되면 토큰도 제거
       tokenStore.clear();
     }
   }, [isLoggedIn]);
