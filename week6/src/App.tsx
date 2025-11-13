@@ -1,56 +1,42 @@
-import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { queryClient } from "./lib/queryClient";
-import Header from "./components/Header";
-import LpListPage from "./pages/LpListPage";
-import LpDetailPage from "./pages/LpDetailPage";
-import ProtectedRoute from "./routes/ProtectedRoute";
-import "./styles/global.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-function Login() {
-  return (
-    <div style={{ maxWidth: 360, margin: "60px auto", color: "#ddd" }}>
-      <h2>로그인</h2>
-      <button
-        onClick={() => {
-          localStorage.setItem("accessToken", "demo");
-          history.back();
-        }}
-      >
-        임시 로그인
-      </button>
-    </div>
-  );
-}
+import MainLayout from "./layouts/MainLayout";
+import { AuthProvider } from "./context/AuthContext";
 
-function Signup() {
-  return (
-    <div style={{ maxWidth: 360, margin: "60px auto", color: "#ddd" }}>
-      <h2>회원가입(모형)</h2>
-    </div>
-  );
-}
+import LpListPage from "./pages/lp/LpListPage";
+import LpDetailPage from "./pages/lp/LpDetailPage";
+import LpCreatePage from "./pages/lp/LpCreatePage";
+import LoginPage from "./pages/auth/LoginPage";
+import SignUpPage from "./pages/auth/SignUpPage";
+
+import "./App.css";
+
+const queryClient = new QueryClient();
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Header />
-        <Routes>
-          <Route path="/" element={<LpListPage />} />
-          <Route
-            path="/lp/:id"
-            element={
-              <ProtectedRoute>
-                <LpDetailPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <MainLayout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/lp" replace />} />
+              <Route path="/lp" element={<LpListPage />} />
+              <Route path="/lp/new" element={<LpCreatePage />} />{" "}
+              <Route path="/lp/:lpId" element={<LpDetailPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="*" element={<Navigate to="/lp" replace />} />
+            </Routes>
+          </MainLayout>
+        </BrowserRouter>
+      </AuthProvider>
+
+      {/* 나중에 Devtools 쓰고 싶으면 주석 풀고 패키지 설치하면 됨
+      <ReactQueryDevtools initialIsOpen={false} />
+      */}
     </QueryClientProvider>
   );
 }
