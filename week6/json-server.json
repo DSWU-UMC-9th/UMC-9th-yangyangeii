@@ -1,0 +1,7 @@
+{
+  "port": 4000,
+  "routes": {
+    "/v1/lps": "/lps",
+    "/v1/lps/:id": "/lps/:id"
+  }
+}

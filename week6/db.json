@@ -1,0 +1,40 @@
+{
+  "lps": [
+    {
+      "id": 21,
+      "title": "Übermensch",
+      "thumbnail": "/covers/ubermensch.jpg",
+      "coverImage": "/covers/ubermensch_big.jpg",
+      "uploader": "오타니오",
+      "likes": 17,
+      "price": 29800,
+      "tags": ["오타니오", "국내", "싱글"],
+      "description": "German-origin title; concept single.",
+      "createdAt": "2025-10-29T09:12:00Z"
+    },
+    {
+      "id": 22,
+      "title": "Melancholy",
+      "thumbnail": "/covers/melancholy.jpg",
+      "coverImage": "/covers/melancholy_big.jpg",
+      "uploader": "Doligo",
+      "likes": 43,
+      "price": 19800,
+      "tags": ["인디", "해외"],
+      "description": "Indie LP with dreamy synth.",
+      "createdAt": "2025-10-30T12:05:00Z"
+    },
+    {
+      "id": 23,
+      "title": "VINYL LOVER",
+      "thumbnail": "/covers/vinyl_lover.jpg",
+      "coverImage": "/covers/vinyl_lover_big.jpg",
+      "uploader": "Seoyun",
+      "likes": 8,
+      "price": 39800,
+      "tags": ["컬렉션"],
+      "description": "Collector’s edition.",
+      "createdAt": "2025-11-01T08:20:00Z"
+    }
+  ]
+}
