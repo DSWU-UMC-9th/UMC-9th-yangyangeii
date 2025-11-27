@@ -1,22 +1,23 @@
-// src/App.tsx
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "./app/hooks";
-import { clearCart, calculateTotals } from "./features/cart/cartSlice";
+import { calculateTotals } from "./features/cart/cartSlice";
+import { openModal } from "./features/modal/modalSlice";
 import CartItemRow from "./components/CartItemRow";
+import ConfirmModal from "./components/ConfirmModal";
 
 function App() {
   const dispatch = useAppDispatch();
   const { cartItems, amount, total } = useAppSelector((state) => state.cart);
 
-  // cartItems가 변할 때마다 합계 자동 계산
   useEffect(() => {
     dispatch(calculateTotals());
   }, [cartItems, dispatch]);
 
   return (
     <div className="min-h-screen bg-slate-100 flex justify-center py-10">
+      <ConfirmModal />
+
       <div className="w-full max-w-3xl bg-slate-50 rounded-lg shadow-md overflow-hidden">
-        {/* Navbar */}
         <header className="flex items-center justify-between bg-slate-800 text-white px-6 py-3">
           <div className="flex items-center gap-2">
             <h1 className="font-semibold text-lg">Ohtani Ahn</h1>
@@ -34,7 +35,6 @@ function App() {
           </div>
         </header>
 
-        {/* 리스트 영역 */}
         <main className="px-6 py-4">
           {cartItems.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
@@ -49,7 +49,6 @@ function App() {
           )}
         </main>
 
-        {/* Footer 영역: 총 수량 / 총 금액 / 전체 삭제 */}
         <footer className="border-t px-6 py-4 bg-white flex items-center justify-between">
           <div className="flex flex-col text-sm">
             <span className="text-gray-600">
@@ -67,7 +66,7 @@ function App() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => dispatch(clearCart())}
+              onClick={() => dispatch(openModal())}
               className="px-3 py-2 text-sm border border-red-400 text-red-500 rounded-md hover:bg-red-50"
             >
               전체 삭제
