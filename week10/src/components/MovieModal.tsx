@@ -55,7 +55,7 @@ export function MovieModal({ movie, onClose }: MovieModalProps) {
               rel="noreferrer"
               className="secondary-button"
             >
-              TMDB에서 검색하기
+              IMDb에서 검색하기
             </a>
             <button className="primary-button" onClick={onClose}>
               닫기
